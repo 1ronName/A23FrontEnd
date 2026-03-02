@@ -1,0 +1,9 @@
+/* 组件样式 */
+/* 写在组件内部：
+
+<style scoped>
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+}
+</style> */

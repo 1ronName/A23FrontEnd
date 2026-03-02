@@ -1,0 +1,5 @@
+/* 页面布局样式 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}

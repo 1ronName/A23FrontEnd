@@ -1,0 +1,6 @@
+extractedData
+loading
+
+// setResult
+
+// setLoading

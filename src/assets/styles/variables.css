@@ -1,0 +1,9 @@
+/* 全局样式 */
+/* 内容：
+reset
+body
+字体
+统一 margin
+
+然后在 main.ts 引入：
+import "@/assets/styles/base.css" */
