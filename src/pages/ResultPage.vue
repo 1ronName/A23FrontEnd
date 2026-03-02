@@ -1,7 +1,8 @@
 <template>
   <div class="result-page">
     <div class="main">
-      <h2>提取结果</h2>
+      <h3>提取结果</h3>
+      <p>展示最近一次提取的结构化数据。可查看字段、准确率占位，后续可在此导出或保存为数据集。</p>
 
       <div v-if="!data">暂无结果，请先执行提取。</div>
 

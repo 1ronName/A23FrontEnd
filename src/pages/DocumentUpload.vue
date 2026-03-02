@@ -1,141 +1,61 @@
 <template>
-  <div class="document-upload">
-    <div class="upload-main">
-      <h2>上传文档</h2>
+  <div class="doc-upload">
+    <h3>📁 文档库</h3>
+    <el-upload
+      class="upload-area"
+      drag
+      multiple
+      action="#"
+      :auto-upload="false"
+      :on-change="handleChange"
+    >
+      <el-icon class="el-icon--upload"><upload-filled /></el-icon>
+      <div class="el-upload__text">拖拽文件到此处或 <em>点击上传</em></div>
+      <template #tip>
+        <div class="el-upload__tip">支持格式：docx, md, xlsx, txt（单个文件≤10MB）</div>
+      </template>
+    </el-upload>
 
-      <div class="dropzone" @drop.prevent="onDrop" @dragover.prevent @dragenter.prevent>
-        <p>将文件拖放到此处，或点击选择文件</p>
-        <input type="file" multiple class="file-input" @change="onFilesChange" />
-      </div>
-
-      <div class="file-list" v-if="files.length">
-        <ul class="plain-list">
-          <li v-for="(file, idx) in files" :key="file.name">
-            <span>{{ file.name }}</span>
-            <el-button type="text" @click="removeFile(idx)">移除</el-button>
-          </li>
-        </ul>
-      </div>
-
-      <div class="actions">
-        <el-button type="primary" :disabled="!files.length || uploading" @click="submitUpload">
-          {{ uploading ? '上传中...' : '提交上传' }}
-        </el-button>
-      </div>
-    </div>
+    <el-table :data="fileList" style="margin-top: 1.5rem">
+      <el-table-column prop="name" label="文件名" />
+      <el-table-column prop="size" label="大小" width="120" />
+      <el-table-column prop="time" label="上传时间" width="180" />
+      <el-table-column label="操作" width="200">
+        <template #default="{ row }">
+          <el-button size="small" @click="preview(row)">预览</el-button>
+          <el-button size="small" type="danger" @click="remove(row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
   </div>
 </template>
 
-<script lang="ts" setup>
+<script setup lang="ts">
 import { ref } from 'vue'
-import { uploadDocuments } from '@/api/document'
-import { useDocumentStore } from '@/stores/documentStore'
+import { UploadFilled } from '@element-plus/icons-vue'
 
-const files = ref<File[]>([])
-const uploading = ref(false)
-const store = useDocumentStore()
+const fileList = ref<any[]>([])
 
-function addFiles(fileList: FileList | File[]) {
-  const arr: File[] = fileList instanceof FileList ? Array.from(fileList) : [...fileList]
-  files.value.push(...arr)
-  store.addDocuments(arr)
+const handleChange = (file: any) => {
+  // 实际处理上传逻辑，这里仅演示
+  fileList.value.push({
+    name: file.name,
+    size: (file.size / 1024).toFixed(2) + ' KB',
+    time: new Date().toLocaleString(),
+    raw: file,
+  })
 }
-
-function onFilesChange(e: Event) {
-  const input = e.target as HTMLInputElement
-  if (input.files) {
-    addFiles(input.files)
-  }
+const preview = (row: any) => {
+  // 预览逻辑
 }
-
-function onDrop(e: DragEvent) {
-  if (e.dataTransfer && e.dataTransfer.files) {
-    addFiles(e.dataTransfer.files)
-  }
-}
-
-function removeFile(index: number) {
-  files.value.splice(index, 1)
-  // 简单同步 store（重写 store.documents）
-  store.documents = [...files.value]
-}
-
-async function submitUpload() {
-  if (!files.value.length) return
-  uploading.value = true
-  const form = new FormData()
-  files.value.forEach((f) => form.append('files', f))
-  try {
-    const res = await uploadDocuments(form)
-    if (res && res.data) {
-      store.uploadedIds = res.data.ids || []
-    }
-    files.value = []
-    store.clearDocuments()
-  } catch (err) {
-    console.error('上传失败', err)
-  } finally {
-    uploading.value = false
-  }
+const remove = (row: any) => {
+  const index = fileList.value.indexOf(row)
+  fileList.value.splice(index, 1)
 }
 </script>
 
 <style scoped>
-.document-upload {
-  min-height: 80vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-}
-
-.upload-main {
-  width: 100%;
-  max-width: 800px;
-}
-
-.dropzone {
-  border: 2px dashed #d9d9d9;
-  border-radius: 8px;
-  padding: 3rem;
-  text-align: center;
-  position: relative;
-  background: #fafafa;
-}
-
-.dropzone p {
-  margin: 0;
-  color: #666;
-}
-
-.file-input {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  cursor: pointer;
-}
-
-.file-list {
+.upload-area {
   margin-top: 1rem;
-}
-
-.plain-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-.plain-list li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.actions {
-  margin-top: 1rem;
-  text-align: right;
 }
 </style>

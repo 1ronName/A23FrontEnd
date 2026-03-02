@@ -1,86 +1,257 @@
 <template>
+  <!-- 宽屏：左右分栏；小屏：选项卡 -->
   <div class="home-container">
-    <div class="home-main">
-      <h1 class="title">文档智能处理系统</h1>
+    <!-- 宽屏模式：左右分栏 -->
+    <div class="home-split">
+      <!-- 左侧面板 -->
+      <aside class="left-panel">
+        <div class="left-header">
+          <h2 class="app-title">📄 智能文档处理</h2>
+          <div class="user-info">
+            <el-avatar
+              :size="32"
+              src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
+            />
+            <span class="username">张三</span>
+          </div>
+        </div>
 
-      <el-row :gutter="20" class="card-row">
-        <el-col :xs="24" :sm="12" :md="8">
-          <el-card shadow="always" class="home-card">
-            <h3>📁 文档上传</h3>
-            <p>当前已选：{{ documentStore.documents.length }} 个文件</p>
-            <el-button type="primary" @click="go('/upload')">前往上传</el-button>
-          </el-card>
-        </el-col>
+        <el-menu
+          :default-active="activeTab"
+          class="menu"
+          @select="handleMenuSelect"
+          :collapse="false"
+          unique-opened
+        >
+          <el-menu-item index="documents">
+            <el-icon><Folder /></el-icon>
+            <span>文档库</span>
+          </el-menu-item>
+          <el-menu-item index="extract">
+            <el-icon><Search /></el-icon>
+            <span>信息提取</span>
+          </el-menu-item>
+          <el-menu-item index="fill">
+            <el-icon><Document /></el-icon>
+            <span>表格填写</span>
+          </el-menu-item>
+          <el-menu-item index="command">
+            <el-icon><ChatDotRound /></el-icon>
+            <span>智能指令</span>
+          </el-menu-item>
+        </el-menu>
 
-        <el-col :xs="24" :sm="12" :md="8">
-          <el-card shadow="always" class="home-card">
-            <h3>🔍 信息提取</h3>
-            <p>
-              最近一次提取：
-              <span v-if="extractStore.extractedData">已完成</span>
-              <span v-else>未开始</span>
-            </p>
-            <el-button type="success" @click="go('/extract')">去提取</el-button>
-          </el-card>
-        </el-col>
+        <div class="left-footer">
+          <el-tag size="small" type="info" effect="plain">当前模型: GLM-4</el-tag>
+          <p class="version">v1.0.0</p>
+        </div>
+      </aside>
 
-        <el-col :xs="24" :sm="12" :md="8">
-          <el-card shadow="always" class="home-card">
-            <h3>🧾 表格填写</h3>
-            <p>
-              模板已上传：
-              <span v-if="tableStore.templateFile">{{ tableStore.templateFile.name }}</span>
-              <span v-else>无</span>
-            </p>
-            <el-button type="warning" @click="go('/fill')">去填写</el-button>
-          </el-card>
-        </el-col>
-      </el-row>
+      <!-- 右侧工作区 -->
+      <main class="right-panel">
+        <keep-alive>
+          <component :is="activeComponent" class="workspace" />
+        </keep-alive>
+      </main>
+    </div>
+
+    <!-- 小屏模式：选项卡 -->
+    <div class="home-tabs">
+      <el-tabs v-model="activeTabName" class="tabs-container">
+        <el-tab-pane label="工具" name="tools">
+          <div class="mobile-menu-wrapper">
+            <div class="mobile-header">
+              <h2 class="app-title">📄 智能文档处理</h2>
+              <div class="user-info">
+                <el-avatar
+                  :size="32"
+                  src="https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png"
+                />
+                <span class="username">张三</span>
+              </div>
+            </div>
+
+            <el-menu
+              :default-active="activeTab"
+              class="menu"
+              @select="handleMenuSelect"
+              unique-opened
+            >
+              <el-menu-item index="documents">
+                <el-icon><Folder /></el-icon>
+                <span>文档库</span>
+              </el-menu-item>
+              <el-menu-item index="extract">
+                <el-icon><Search /></el-icon>
+                <span>信息提取</span>
+              </el-menu-item>
+              <el-menu-item index="fill">
+                <el-icon><Document /></el-icon>
+                <span>表格填写</span>
+              </el-menu-item>
+              <el-menu-item index="command">
+                <el-icon><ChatDotRound /></el-icon>
+                <span>智能指令</span>
+              </el-menu-item>
+            </el-menu>
+
+            <div class="mobile-footer">
+              <el-tag size="small" type="info" effect="plain">当前模型: GLM-4</el-tag>
+              <p class="version">v1.0.0</p>
+            </div>
+          </div>
+        </el-tab-pane>
+
+        <el-tab-pane label="工作区" name="workspace">
+          <keep-alive>
+            <component :is="activeComponent" class="workspace" />
+          </keep-alive>
+        </el-tab-pane>
+      </el-tabs>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { useDocumentStore } from '@/stores/documentStore'
-import { useExtractStore } from '@/stores/extractStore'
-import { useTableStore } from '@/stores/tableStore'
+import { ref, computed } from 'vue'
+import { Folder, Search, Document, ChatDotRound } from '@element-plus/icons-vue'
+import DocumentUpload from '@/pages/DocumentUpload.vue'
+import Extraction from '@/pages/Extraction.vue'
+import TableFill from '@/pages/TableFill.vue'
+import CommandPage from '@/pages/CommandPage.vue'
 
-const router = useRouter()
+const activeTab = ref('documents')
+const activeTabName = ref('workspace')
 
-const documentStore = useDocumentStore()
-const extractStore = useExtractStore()
-const tableStore = useTableStore()
+const componentsMap: Record<string, any> = {
+  documents: DocumentUpload,
+  extract: Extraction,
+  fill: TableFill,
+  command: CommandPage,
+}
 
-const go = (path: string) => {
-  router.push(path)
+const activeComponent = computed(() => componentsMap[activeTab.value] || DocumentUpload)
+
+const handleMenuSelect = (key: string) => {
+  activeTab.value = key
+  // 小屏时自动切换到工作区选项卡
+  activeTabName.value = 'workspace'
 }
 </script>
 
 <style scoped>
 .home-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 宽屏：分栏模式 */
+.home-split {
+  display: flex;
   min-height: 100vh;
+  background-color: #f5f7fa;
+}
+
+.left-panel {
+  width: 280px;
+  background-color: #ffffff;
+  border-right: 1px solid #e4e7ed;
+  padding: 1.5rem 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.left-header {
+  padding: 0 1.25rem 1rem 1.25rem;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.app-title {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.user-info {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 2rem;
+  gap: 0.75rem;
 }
 
-.home-main {
+.username {
+  font-size: 0.95rem;
+  color: #606266;
+}
+
+.menu {
+  flex: 1;
+  border: none;
+  margin-top: 0.5rem;
+}
+
+.left-footer {
+  padding: 1.25rem;
+  border-top: 1px solid #f0f2f5;
+  color: #909399;
+  font-size: 0.85rem;
+}
+
+.version {
+  margin-top: 0.5rem;
+  color: #c0c4cc;
+}
+
+.right-panel {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+}
+
+/* 小屏：选项卡模式 */
+.home-tabs {
+  display: none;
   width: 100%;
-  max-width: 1000px;
-  text-align: center;
+  height: 100%;
 }
 
-.title {
-  margin-bottom: 1.5rem;
+.tabs-container {
+  width: 100%;
+  height: 100%;
 }
 
-.card-row {
-  margin: 0 auto;
-}
-
-.home-card {
+.mobile-menu-wrapper {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.mobile-header {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #f0f2f5;
+}
+
+.mobile-footer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #f0f2f5;
+  color: #909399;
+  font-size: 0.85rem;
+}
+
+/* 响应式媒体查询（屏幕宽度 < 1024px 时切换为选项卡） */
+@media (max-width: 1023px) {
+  .home-split {
+    display: none;
+  }
+
+  .home-tabs {
+    display: flex;
+  }
 }
 </style>
