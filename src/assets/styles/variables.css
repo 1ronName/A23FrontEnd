@@ -7,3 +7,13 @@ body
 
 然后在 main.ts 引入：
 import "@/assets/styles/base.css" */
+:root {
+  --bg-color: #f5f7fa;
+  --card-width: 400px;
+
+  --primary-color: #409eff;
+  --success-color: #67c23a;
+  --warning-color: #e6a23c;
+
+  --radius: 8px;
+}
